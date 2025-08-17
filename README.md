@@ -1,70 +1,74 @@
-# React + TypeScript + Vite
+# AI Research Explorer - By [Your Name]
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Live Demo
 
-Currently, two official plugins are available:
+[Your deployed app URL]
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Setup Instructions
 
-## Expanding the ESLint configuration
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Configure environment variables (see .env.example)
+4. Start development server: `npm run dev`
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## API Configuration
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Create account at [chosen AI provider]
+- Add API key to .env file
+- [Any specific setup instructions]
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## Features Implemented
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- [x] Mock research paper search with filters
+- [x] AI-powered paper analysis and chat
+- [x] Results visualization and browsing
+- [x] Interactive chat interface for research questions
+- [ ] Additional bonus features (data visualizations, etc.)
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Mock Data
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Dataset Size**: [Number] research papers across [X] topics
+- **Data Generation**: [Approach used - manual, Faker.js, etc.]
+- **Topics Covered**: [List main research areas included]
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-# AI-Research-Explorer
+FAQ
+Q: Can I use additional libraries?
+A: Yes, but justify your choices in the README.
+Q: What if I can't complete everything?
+A: Focus on core requirements and document what's incomplete.
+Q: Do I need to implement authentication?
+A: No, focus on the core features. Authentication is not required for this assessment.
+Q: How realistic should the mock data be?
+A: Make it believable but don't spend too much time on content. Focus on structure and functionality.
+Q: Can I ask questions during the assessment?
+A: This is a self-contained test, but clarification questions via email are okay.
+
+Good luck! We're excited to see what you build!
+Questions? Email us at jobs@infinitgraph.ai
+
+## Technical Decisions
+
+- **State Management**: [Context API usage and reasoning]
+- **UI Library**: [Material-UI implementation and customization]
+- **AI API**: [Cohere/Groq/HuggingFace choice and integration approach]
+- **Custom Hooks**: [List main hooks created and their purposes]
+- **Component Architecture**: [How you organized components and why]
+- **Mock Data Strategy**: [How you created realistic research data]
+- **TypeScript Usage**: [How you leveraged TypeScript for type safety]
+- **Performance Optimization**: [Any optimizations implemented]
+
+## Time Breakdown
+
+- Setup & Planning: X hours
+- UI Development: X hours
+- API Integration: X hours
+- Testing & Polish: X hours
+- **Total**: X hours
+
+## Challenges & Solutions
+
+[Describe main challenges faced and how you solved them]
+
+## Future Improvements
+
+[What you would add/improve with more time]
