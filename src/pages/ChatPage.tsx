@@ -1,22 +1,90 @@
 import React from 'react';
-import { Box, Typography, AppBar, Toolbar, IconButton, Container, Chip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Container,
+  Chip,
+  Button,
+  Paper,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Home, Search } from '@mui/icons-material';
+import { Home, Search, Psychology as AIIcon, ArrowBack } from '@mui/icons-material';
 import { useChat } from '../hooks/useChat';
 import ChatWindow from '../components/ChatWindow';
 
 const ChatPage: React.FC = () => {
   const navigate = useNavigate();
-  const { state } = useChat();
+  const { state, sendMessage, clearChatHistory } = useChat();
+  const previousPaperIds = React.useRef<string>('');
 
   const handleGoHome = () => {
     navigate('/');
   };
 
-  const handleGoToSearch = () => {
+  const handleBackToSearch = () => {
     navigate('/search');
   };
 
+  // Clear chat history when selected papers actually change
+  React.useEffect(() => {
+    const currentPaperIds = state.selectedPapers
+      .map((paper) => paper.id)
+      .sort()
+      .join(',');
+
+    if (previousPaperIds.current === '') {
+      // First time mounting, just store the current papers
+      previousPaperIds.current = currentPaperIds;
+    } else if (previousPaperIds.current !== currentPaperIds) {
+      // Papers actually changed, clear history
+      clearChatHistory();
+      previousPaperIds.current = currentPaperIds;
+    }
+  }, [state.selectedPapers, clearChatHistory]);
+
+  // Generate suggested prompts based on number of selected papers
+  const getSuggestedPrompts = () => {
+    const paperCount = state.selectedPapers.length;
+
+    if (paperCount === 0) return [];
+
+    if (paperCount === 1) {
+      return ['Summarize this research paper', 'Extract main topics from this paper'];
+    }
+
+    if (paperCount >= 2 && paperCount <= 3) {
+      return ['Compare these research papers'];
+    }
+
+    if (paperCount > 5) {
+      return ['Perform a trend analysis of these research papers'];
+    }
+
+    return [];
+  };
+
+  const handleSuggestedPrompt = async (prompt: string) => {
+    let fullPrompt = prompt;
+
+    // Add context when sending the actual message
+    if (prompt === 'Summarize this research paper') {
+      const paper = state.selectedPapers[0];
+      fullPrompt = `Summarize this research paper: ${paper.abstract}`;
+    } else if (prompt === 'Extract main topics from this paper') {
+      const paper = state.selectedPapers[0];
+      fullPrompt = `Extract main topics from: ${paper.abstract}`;
+    } else if (prompt === 'Compare these research papers') {
+      const titles = state.selectedPapers.map((paper) => paper.title).join(', ');
+      fullPrompt = `Compare these research papers: ${titles}`;
+    } else if (prompt === 'Perform a trend analysis of these research papers') {
+      fullPrompt = `Perform a trend analysis of these ${state.selectedPapers.length} research papers`;
+    }
+
+    await sendMessage(fullPrompt);
+  };
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Header */}
@@ -28,20 +96,34 @@ const ChatPage: React.FC = () => {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             AI Research Explorer - Chat
           </Typography>
-          <IconButton color="inherit" onClick={handleGoToSearch} sx={{ ml: 2 }}>
+          <IconButton color="inherit" onClick={handleBackToSearch} sx={{ ml: 2 }}>
             <Search />
           </IconButton>
         </Toolbar>
       </AppBar>
 
       {/* Content */}
-      <Container maxWidth="lg" sx={{ py: 3, height: 'calc(100vh - 64px)' }}>
+      <Container maxWidth="lg" sx={{ py: 3, height: '100%' }}>
         {/* Selected Papers Summary */}
         {state.selectedPapers.length > 0 && (
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" gutterBottom color="primary.main">
-              Selected Papers ({state.selectedPapers.length})
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <IconButton
+                onClick={handleBackToSearch}
+                size="small"
+                sx={{
+                  color: 'primary.main',
+                  '&:hover': {
+                    bgcolor: 'primary.50',
+                  },
+                }}
+              >
+                <ArrowBack />
+              </IconButton>
+              <Typography variant="h6" color="primary.main">
+                Selected Papers ({state.selectedPapers.length})
+              </Typography>
+            </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
               {state.selectedPapers.map((paper) => (
                 <Chip
@@ -54,6 +136,46 @@ const ChatPage: React.FC = () => {
               ))}
             </Box>
           </Box>
+        )}
+
+        {/* Suggested Prompts */}
+        {state.selectedPapers.length > 0 && getSuggestedPrompts().length > 0 && (
+          <Paper elevation={1} sx={{ p: 3, mb: 3, bgcolor: 'primary.50' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <AIIcon color="primary" />
+              <Typography variant="h6" color="primary.main">
+                Suggested Questions
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {getSuggestedPrompts().map((prompt, index) => (
+                <Button
+                  key={index}
+                  variant="outlined"
+                  onClick={() => handleSuggestedPrompt(prompt)}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    textAlign: 'left',
+                    textTransform: 'none',
+                    py: 1.5,
+                    px: 2,
+                    borderRadius: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 500,
+                    color: 'text.primary',
+                    borderColor: 'primary.200',
+                    bgcolor: 'background.paper',
+                    '&:hover': {
+                      bgcolor: 'primary.100',
+                      borderColor: 'primary.main',
+                    },
+                  }}
+                >
+                  {prompt}
+                </Button>
+              ))}
+            </Box>
+          </Paper>
         )}
 
         {/* Chat Interface */}

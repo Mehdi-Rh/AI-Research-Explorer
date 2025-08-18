@@ -194,7 +194,7 @@ const SelectedPapersMenu: React.FC<SelectedPapersMenuProps> = ({
 const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useSearch();
-  const { setSelectedPapers: setChatSelectedPapers } = useChat();
+  const { setSelectedPapers: setChatSelectedPapers, state: chatState } = useChat();
 
   // Local state for view preferences
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -202,6 +202,14 @@ const SearchPage: React.FC = () => {
   const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const resultsPerPage = 12;
+
+  // Sync with chat selected papers when component mounts
+  useEffect(() => {
+    if (chatState.selectedPapers.length > 0) {
+      const paperIds = new Set(chatState.selectedPapers.map((paper) => paper.id));
+      setSelectedPapers(paperIds);
+    }
+  }, [chatState.selectedPapers]); // Sync whenever chat selected papers change
 
   // Reset pagination when results change
   useEffect(() => {

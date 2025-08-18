@@ -68,7 +68,7 @@ const ChatWindow: React.FC = () => {
           flexDirection: 'column',
           gap: 2,
           minHeight: 0,
-          maxHeight: 'calc(100vh - 280px)',
+          maxHeight: '100%',
         }}
       >
         {/* Empty State */}
