@@ -19,16 +19,18 @@ import {
   Badge,
   Menu,
   ListItemText,
+  Button,
 } from '@mui/material';
 import {
   Home,
   ViewModule as GridViewIcon,
   ViewList as ListViewIcon,
   Close as CloseIcon,
-  Bookmark as BookmarkIcon,
+  Psychology as AIIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../hooks/useSearch';
+import { useChat } from '../hooks/useChat';
 import SearchBar from '../components/SearchBar';
 import PaperCard from '../components/PaperCard';
 import { mockPapers } from '../data/mockPapers';
@@ -192,6 +194,7 @@ const SelectedPapersMenu: React.FC<SelectedPapersMenuProps> = ({
 const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useSearch();
+  const { setSelectedPapers: setChatSelectedPapers } = useChat();
 
   // Local state for view preferences
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -309,6 +312,19 @@ const SearchPage: React.FC = () => {
     navigate('/');
   };
 
+  const handleAnalyzeWithAI = () => {
+    // Get selected paper details
+    const selectedPaperDetails = Array.from(selectedPapers)
+      .map((paperId) => mockPapers.find((paper) => paper.id === paperId))
+      .filter((paper): paper is NonNullable<typeof paper> => paper !== undefined);
+    
+    // Transfer selected papers to chat context
+    setChatSelectedPapers(selectedPaperDetails);
+    
+    // Navigate to chat page
+    navigate('/chat');
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Header */}
@@ -327,14 +343,30 @@ const SearchPage: React.FC = () => {
         {/* Selected Papers Menu */}
         {selectedPapers.size > 0 && (
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
               <Typography variant="body1" color="text.primary">
                 You have selected {selectedPapers.size} paper{selectedPapers.size > 1 ? 's' : ''}
               </Typography>
-              <SelectedPapersMenu
-                selectedPapers={selectedPapers}
-                onRemovePaper={handleRemovePaper}
-              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<AIIcon />}
+                  onClick={handleAnalyzeWithAI}
+                  size="small"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                    },
+                  }}
+                >
+                  Analyze with AI
+                </Button>
+                <SelectedPapersMenu
+                  selectedPapers={selectedPapers}
+                  onRemovePaper={handleRemovePaper}
+                />
+              </Box>
             </Box>
           </Paper>
         )}

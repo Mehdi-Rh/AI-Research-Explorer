@@ -1,13 +1,20 @@
 import React from 'react';
-import { Box, Typography, AppBar, Toolbar, IconButton } from '@mui/material';
+import { Box, Typography, AppBar, Toolbar, IconButton, Container, Chip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Home } from '@mui/icons-material';
+import { Home, Search } from '@mui/icons-material';
+import { useChat } from '../hooks/useChat';
+import ChatWindow from '../components/ChatWindow';
 
 const ChatPage: React.FC = () => {
   const navigate = useNavigate();
+  const { state } = useChat();
 
   const handleGoHome = () => {
     navigate('/');
+  };
+
+  const handleGoToSearch = () => {
+    navigate('/search');
   };
 
   return (
@@ -19,20 +26,39 @@ const ChatPage: React.FC = () => {
             <Home />
           </IconButton>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            AI Research Explorer
+            AI Research Explorer - Chat
           </Typography>
+          <IconButton color="inherit" onClick={handleGoToSearch} sx={{ ml: 2 }}>
+            <Search />
+          </IconButton>
         </Toolbar>
       </AppBar>
 
       {/* Content */}
-      <Box sx={{ py: 4, px: 3, width: '100%' }}>
-        <Typography variant="h4" gutterBottom>
-          AI Chat
-        </Typography>
-        <Typography variant="body1">
-          This is the chat page. AI chat functionality will be added later.
-        </Typography>
-      </Box>
+      <Container maxWidth="lg" sx={{ py: 3, height: 'calc(100vh - 64px)' }}>
+        {/* Selected Papers Summary */}
+        {state.selectedPapers.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom color="primary.main">
+              Selected Papers ({state.selectedPapers.length})
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+              {state.selectedPapers.map((paper) => (
+                <Chip
+                  key={paper.id}
+                  label={`${paper.title.substring(0, 50)}${paper.title.length > 50 ? '...' : ''}`}
+                  variant="outlined"
+                  size="small"
+                  color="primary"
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        {/* Chat Interface */}
+        <ChatWindow />
+      </Container>
     </Box>
   );
 };
