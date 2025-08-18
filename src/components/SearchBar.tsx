@@ -16,8 +16,19 @@ import {
   Typography,
   Button,
   Badge,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemButton,
+  Divider,
+  ClickAwayListener,
 } from '@mui/material';
-import { Search as SearchIcon, Clear as ClearIcon, Tune as TuneIcon } from '@mui/icons-material';
+import {
+  Search as SearchIcon,
+  Clear as ClearIcon,
+  Tune as TuneIcon,
+  History as HistoryIcon,
+} from '@mui/icons-material';
 import { useSearch } from '../hooks/useSearch';
 import { mockPapers, searchPapers } from '../data/mockPapers';
 import type { SearchFilters } from '../contexts/SearchContext';
@@ -60,11 +71,13 @@ const getUniqueVenues = () => {
 };
 
 const SearchBar: React.FC = () => {
-  const { state, setQuery, setFilters, resetSearch, setResults, setLoading } = useSearch();
+  const { state, setQuery, setFilters, resetSearch, setResults, setLoading, addToSearchHistory } =
+    useSearch();
 
   // Local state
   const [searchValue, setSearchValue] = useState(state.query);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   // Track initial render to prevent search on mount
   const isInitialRender = useRef(true);
@@ -185,7 +198,12 @@ const SearchBar: React.FC = () => {
 
         setResults(results);
 
-        // Note: Search history functionality removed
+        // Add to search history if there's a query and results were found
+        if (state.query.trim() && results.length > 0) {
+          addToSearchHistory(state.query.trim());
+        }
+
+        // Note: Search history functionality added
       } catch (error) {
         console.error('Search error:', error);
       } finally {
@@ -194,11 +212,22 @@ const SearchBar: React.FC = () => {
     };
 
     performSearchAsync();
-  }, [state.query, state.filters, setResults, setLoading]);
+  }, [state.query, state.filters, setResults, setLoading, addToSearchHistory]);
 
   // Handle filter changes
   const handleFilterChange = (filterUpdate: Partial<SearchFilters>) => {
     setFilters(filterUpdate);
+  };
+
+  // Handle search history selection
+  const handleHistorySelect = (query: string) => {
+    setSearchValue(query);
+    setHistoryOpen(false);
+  };
+
+  // Handle search history toggle
+  const handleHistoryToggle = () => {
+    setHistoryOpen(!historyOpen);
   };
 
   // Clear all filters and search
@@ -224,22 +253,94 @@ const SearchBar: React.FC = () => {
   return (
     <Paper elevation={1} sx={{ p: 2, mb: 3 }}>
       {/* Main Search Bar */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search papers by title, abstract, authors, or topics..."
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-          InputProps={{
-            startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />,
-            endAdornment: searchValue && (
-              <IconButton size="small" onClick={() => setSearchValue('')} aria-label="clear search">
-                <ClearIcon />
-              </IconButton>
-            ),
-          }}
-        />
+      <Box sx={{ display: 'flex', gap: 1, mb: 2, position: 'relative' }}>
+        <Box sx={{ flexGrow: 1, position: 'relative' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search papers by title, abstract, authors, or topics..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            InputProps={{
+              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1 }} />,
+              endAdornment: (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  {/* Search History Button */}
+                  {state.searchHistory.length > 0 && (
+                    <Tooltip title="Search History">
+                      <IconButton
+                        size="small"
+                        onClick={handleHistoryToggle}
+                        color={historyOpen ? 'primary' : 'default'}
+                      >
+                        <HistoryIcon />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  {/* Clear Search Button */}
+                  {searchValue && (
+                    <IconButton
+                      size="small"
+                      onClick={() => setSearchValue('')}
+                      aria-label="clear search"
+                    >
+                      <ClearIcon />
+                    </IconButton>
+                  )}
+                </Box>
+              ),
+            }}
+          />
+
+          {/* Search History Dropdown */}
+          {historyOpen && state.searchHistory.length > 0 && (
+            <ClickAwayListener onClickAway={() => setHistoryOpen(false)}>
+              <Paper
+                sx={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1000,
+                  mt: 1,
+                  maxHeight: 300,
+                  overflow: 'auto',
+                }}
+                elevation={3}
+              >
+                <Box sx={{ p: 1 }}>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ px: 1, py: 0.5 }}>
+                    Recent Searches
+                  </Typography>
+                  <Divider />
+                </Box>
+                <List dense>
+                  {state.searchHistory.map((query, index) => (
+                    <ListItem key={index} disablePadding>
+                      <ListItemButton
+                        onClick={() => handleHistorySelect(query)}
+                        sx={{
+                          '&:hover': {
+                            backgroundColor: 'action.hover',
+                          },
+                        }}
+                      >
+                        <HistoryIcon sx={{ mr: 1, fontSize: 20, color: 'text.secondary' }} />
+                        <ListItemText
+                          primary={query}
+                          primaryTypographyProps={{
+                            variant: 'body2',
+                            noWrap: true,
+                          }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            </ClickAwayListener>
+          )}
+        </Box>
 
         {/* Filter Toggle Button */}
         <Tooltip title="Filters">

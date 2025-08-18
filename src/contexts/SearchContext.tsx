@@ -19,6 +19,41 @@ const getMaxYearRange = (): number => {
   return getCurrentYear();
 };
 
+// Search history localStorage utilities
+const SEARCH_HISTORY_KEY = 'ai-research-explorer-search-history';
+const MAX_SEARCH_HISTORY = 10;
+
+const getSearchHistoryFromStorage = (): string[] => {
+  try {
+    const stored = localStorage.getItem(SEARCH_HISTORY_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveSearchHistoryToStorage = (history: string[]): void => {
+  try {
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+  } catch {
+    // Silently fail if localStorage is not available
+  }
+};
+
+const addToSearchHistory = (query: string, currentHistory: string[]): string[] => {
+  if (!query.trim()) return currentHistory;
+
+  // Remove existing instance of the query (case-insensitive)
+  const filteredHistory = currentHistory.filter(
+    (item) => item.toLowerCase() !== query.toLowerCase()
+  );
+
+  // Add to beginning and limit to MAX_SEARCH_HISTORY
+  const newHistory = [query, ...filteredHistory].slice(0, MAX_SEARCH_HISTORY);
+  saveSearchHistoryToStorage(newHistory);
+  return newHistory;
+};
+
 // Search Filters Interface
 export interface SearchFilters {
   yearRange: {
@@ -47,6 +82,7 @@ export interface SearchState {
   currentPage: number;
   itemsPerPage: number;
   totalResults: number;
+  searchHistory: string[];
 }
 
 // Initial Search Filters
@@ -77,6 +113,7 @@ const initialState: SearchState = {
   currentPage: 1,
   itemsPerPage: 10,
   totalResults: 0,
+  searchHistory: getSearchHistoryFromStorage(),
 };
 
 // Search Action Types
@@ -95,6 +132,8 @@ export type SearchAction =
   | { type: 'SET_PAGE'; payload: number }
   | { type: 'SET_ITEMS_PER_PAGE'; payload: number }
   | { type: 'SET_TOTAL_RESULTS'; payload: number }
+  | { type: 'ADD_TO_SEARCH_HISTORY'; payload: string }
+  | { type: 'CLEAR_SEARCH_HISTORY' }
   | { type: 'RESET_SEARCH' };
 
 // Search Reducer
@@ -182,9 +221,25 @@ function searchReducer(state: SearchState, action: SearchAction): SearchState {
         totalResults: action.payload,
       };
 
+    case 'ADD_TO_SEARCH_HISTORY': {
+      const newHistory = addToSearchHistory(action.payload, state.searchHistory);
+      return {
+        ...state,
+        searchHistory: newHistory,
+      };
+    }
+
+    case 'CLEAR_SEARCH_HISTORY':
+      saveSearchHistoryToStorage([]);
+      return {
+        ...state,
+        searchHistory: [],
+      };
+
     case 'RESET_SEARCH':
       return {
         ...initialState,
+        searchHistory: state.searchHistory, // Preserve search history on reset
       };
 
     default:
@@ -208,6 +263,8 @@ export interface SearchContextType {
   setPage: (page: number) => void;
   setItemsPerPage: (itemsPerPage: number) => void;
   setTotalResults: (total: number) => void;
+  addToSearchHistory: (query: string) => void;
+  clearSearchHistory: () => void;
   resetSearch: () => void;
   // Computed values
   paginatedResults: MockPaper[];
@@ -305,6 +362,20 @@ export function SearchProvider({ children }: SearchProviderProps) {
     []
   );
 
+  const addToSearchHistoryMemo = useMemo(
+    () => (query: string) => {
+      dispatch({ type: 'ADD_TO_SEARCH_HISTORY', payload: query });
+    },
+    []
+  );
+
+  const clearSearchHistory = useMemo(
+    () => () => {
+      dispatch({ type: 'CLEAR_SEARCH_HISTORY' });
+    },
+    []
+  );
+
   const resetSearch = useMemo(
     () => () => {
       dispatch({ type: 'RESET_SEARCH' });
@@ -345,6 +416,8 @@ export function SearchProvider({ children }: SearchProviderProps) {
       setPage,
       setItemsPerPage,
       setTotalResults,
+      addToSearchHistory: addToSearchHistoryMemo,
+      clearSearchHistory,
       resetSearch,
       paginatedResults,
       totalPages,
@@ -364,6 +437,8 @@ export function SearchProvider({ children }: SearchProviderProps) {
       setPage,
       setItemsPerPage,
       setTotalResults,
+      addToSearchHistoryMemo,
+      clearSearchHistory,
       resetSearch,
       paginatedResults,
       totalPages,
