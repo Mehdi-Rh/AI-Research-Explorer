@@ -71,14 +71,21 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       };
 
     case 'SET_SELECTED_PAPERS': {
-      const currentPaperIds = state.selectedPapers.map(paper => paper.id).sort().join(',');
-      const newPaperIds = action.payload.map(paper => paper.id).sort().join(',');
-      
+      const currentPaperIds = state.selectedPapers
+        .map((paper) => paper.id)
+        .sort()
+        .join(',');
+      const newPaperIds = action.payload
+        .map((paper) => paper.id)
+        .sort()
+        .join(',');
+
       // If papers actually changed and we have chat history, clear it
-      const shouldClearHistory = state.lastPaperIds !== '' && 
-                                 currentPaperIds !== newPaperIds && 
-                                 state.chatHistory.length > 0;
-      
+      const shouldClearHistory =
+        state.lastPaperIds !== '' &&
+        currentPaperIds !== newPaperIds &&
+        state.chatHistory.length > 0;
+
       return {
         ...state,
         selectedPapers: action.payload,
