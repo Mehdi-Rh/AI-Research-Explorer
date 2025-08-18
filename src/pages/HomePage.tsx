@@ -7,7 +7,7 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleStartResearch = () => {
-    navigate('/articles');
+    navigate('/search');
   };
 
   return (
