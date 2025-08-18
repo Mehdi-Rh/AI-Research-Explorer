@@ -317,10 +317,10 @@ const SearchPage: React.FC = () => {
     const selectedPaperDetails = Array.from(selectedPapers)
       .map((paperId) => mockPapers.find((paper) => paper.id === paperId))
       .filter((paper): paper is NonNullable<typeof paper> => paper !== undefined);
-    
+
     // Transfer selected papers to chat context
     setChatSelectedPapers(selectedPaperDetails);
-    
+
     // Navigate to chat page
     navigate('/chat');
   };
@@ -343,7 +343,14 @@ const SearchPage: React.FC = () => {
         {/* Selected Papers Menu */}
         {selectedPapers.size > 0 && (
           <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 2,
+              }}
+            >
               <Typography variant="body1" color="text.primary">
                 You have selected {selectedPapers.size} paper{selectedPapers.size > 1 ? 's' : ''}
               </Typography>

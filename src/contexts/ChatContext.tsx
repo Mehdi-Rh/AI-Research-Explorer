@@ -75,7 +75,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
     case 'ADD_SELECTED_PAPER': {
       // Check if paper is already selected
-      const paperExists = state.selectedPapers.some(paper => paper.id === action.payload.id);
+      const paperExists = state.selectedPapers.some((paper) => paper.id === action.payload.id);
       if (paperExists) {
         return state; // Don't add duplicate
       }
@@ -88,7 +88,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
     case 'REMOVE_SELECTED_PAPER':
       return {
         ...state,
-        selectedPapers: state.selectedPapers.filter(paper => paper.id !== action.payload),
+        selectedPapers: state.selectedPapers.filter((paper) => paper.id !== action.payload),
       };
 
     case 'CLEAR_SELECTED_PAPERS':
@@ -224,13 +224,10 @@ export function ChatProvider({ children }: ChatProviderProps) {
     [state.selectedPapers.length]
   );
 
-  const messageCount = useMemo(
-    () => state.chatHistory.length,
-    [state.chatHistory.length]
-  );
+  const messageCount = useMemo(() => state.chatHistory.length, [state.chatHistory.length]);
 
   const lastMessage = useMemo(
-    () => state.chatHistory.length > 0 ? state.chatHistory[state.chatHistory.length - 1] : null,
+    () => (state.chatHistory.length > 0 ? state.chatHistory[state.chatHistory.length - 1] : null),
     [state.chatHistory]
   );
 
