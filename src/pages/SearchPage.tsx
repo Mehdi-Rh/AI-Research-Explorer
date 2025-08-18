@@ -342,38 +342,35 @@ const SearchPage: React.FC = () => {
       <Container maxWidth="xl" sx={{ py: 3 }}>
         {/* Selected Papers Menu */}
         {selectedPapers.size > 0 && (
-          <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 2,
-              }}
-            >
-              <Typography variant="body1" color="text.primary">
-                You have selected {selectedPapers.size} paper{selectedPapers.size > 1 ? 's' : ''}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  startIcon={<AIIcon />}
-                  onClick={handleAnalyzeWithAI}
-                  size="small"
-                  sx={{
-                    bgcolor: 'primary.main',
-                    '&:hover': {
-                      bgcolor: 'primary.dark',
-                    },
-                  }}
-                >
-                  Analyze with AI
-                </Button>
-                <SelectedPapersMenu
-                  selectedPapers={selectedPapers}
-                  onRemovePaper={handleRemovePaper}
-                />
-              </Box>
+          <Paper elevation={1} sx={{ p: 3, mb: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+              {/* Prominent CTA Button */}
+              <Button
+                variant="contained"
+                startIcon={<AIIcon />}
+                onClick={handleAnalyzeWithAI}
+                size="large"
+                fullWidth
+                sx={{
+                  py: 1.5,
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  boxShadow: 2,
+                  '&:hover': {
+                    boxShadow: 4,
+                    bgcolor: 'primary.dark',
+                  },
+                }}
+              >
+                🚀 Analyze {selectedPapers.size} Selected Paper{selectedPapers.size > 1 ? 's' : ''}{' '}
+                with AI
+              </Button>{' '}
+              <SelectedPapersMenu
+                selectedPapers={selectedPapers}
+                onRemovePaper={handleRemovePaper}
+              />
             </Box>
           </Paper>
         )}
