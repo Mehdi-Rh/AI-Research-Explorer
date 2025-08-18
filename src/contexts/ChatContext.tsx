@@ -14,6 +14,7 @@ export interface ChatMessage {
 export interface ChatState {
   chatHistory: ChatMessage[];
   selectedPapers: MockPaper[];
+  lastPaperIds: string; // Track the last set of paper IDs
   isLoading: boolean;
   error: string | null;
 }
@@ -22,6 +23,7 @@ export interface ChatState {
 const initialState: ChatState = {
   chatHistory: [],
   selectedPapers: [],
+  lastPaperIds: '',
   isLoading: false,
   error: null,
 };
@@ -36,6 +38,7 @@ export type ChatAction =
   | { type: 'CLEAR_SELECTED_PAPERS' }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
+  | { type: 'CHECK_AND_CLEAR_ON_PAPER_CHANGE' } // Check if papers changed and clear if needed
   | { type: 'RESET_CHAT' };
 
 // Generate unique ID for messages
@@ -67,11 +70,22 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         error: null,
       };
 
-    case 'SET_SELECTED_PAPERS':
+    case 'SET_SELECTED_PAPERS': {
+      const currentPaperIds = state.selectedPapers.map(paper => paper.id).sort().join(',');
+      const newPaperIds = action.payload.map(paper => paper.id).sort().join(',');
+      
+      // If papers actually changed and we have chat history, clear it
+      const shouldClearHistory = state.lastPaperIds !== '' && 
+                                 currentPaperIds !== newPaperIds && 
+                                 state.chatHistory.length > 0;
+      
       return {
         ...state,
         selectedPapers: action.payload,
+        lastPaperIds: newPaperIds,
+        chatHistory: shouldClearHistory ? [] : state.chatHistory,
       };
+    }
 
     case 'ADD_SELECTED_PAPER': {
       // Check if paper is already selected

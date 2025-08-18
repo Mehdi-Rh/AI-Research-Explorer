@@ -17,8 +17,7 @@ import ChatWindow from '../components/ChatWindow';
 
 const ChatPage: React.FC = () => {
   const navigate = useNavigate();
-  const { state, sendMessage, clearChatHistory } = useChat();
-  const previousPaperIds = React.useRef<string>('');
+  const { state, sendMessage } = useChat();
 
   const handleGoHome = () => {
     navigate('/');
@@ -27,23 +26,6 @@ const ChatPage: React.FC = () => {
   const handleBackToSearch = () => {
     navigate('/search');
   };
-
-  // Clear chat history when selected papers actually change
-  React.useEffect(() => {
-    const currentPaperIds = state.selectedPapers
-      .map((paper) => paper.id)
-      .sort()
-      .join(',');
-
-    if (previousPaperIds.current === '') {
-      // First time mounting, just store the current papers
-      previousPaperIds.current = currentPaperIds;
-    } else if (previousPaperIds.current !== currentPaperIds) {
-      // Papers actually changed, clear history
-      clearChatHistory();
-      previousPaperIds.current = currentPaperIds;
-    }
-  }, [state.selectedPapers, clearChatHistory]);
 
   // Generate suggested prompts based on number of selected papers
   const getSuggestedPrompts = () => {
