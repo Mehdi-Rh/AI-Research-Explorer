@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Typography, Paper, Avatar } from '@mui/material';
 import { Person as UserIcon, SmartToy as AIIcon } from '@mui/icons-material';
 import type { ChatMessage } from '../contexts/ChatContext';
+import MarkdownText from './MarkdownText';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -63,7 +64,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               lineHeight: 1.4,
             }}
           >
-            {message.text}
+            {isAI ? <MarkdownText text={message.text} variant="body1" /> : message.text}
           </Typography>
         </Paper>
 
