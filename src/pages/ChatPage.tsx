@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -18,6 +18,13 @@ import ChatWindow from '../components/ChatWindow';
 const ChatPage: React.FC = () => {
   const navigate = useNavigate();
   const { state, sendMessage } = useChat();
+
+  // Redirect to search if no papers are selected
+  useEffect(() => {
+    if (state.selectedPapers.length === 0) {
+      navigate('/search', { replace: true });
+    }
+  }, [state.selectedPapers.length, navigate]);
 
   const handleGoHome = () => {
     navigate('/');
@@ -53,6 +60,12 @@ const ChatPage: React.FC = () => {
 
     await sendMessage(fullPrompt);
   };
+
+  // Don't render content if no papers are selected (redirect in progress)
+  if (state.selectedPapers.length === 0) {
+    return null; // or a loading spinner
+  }
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Header */}

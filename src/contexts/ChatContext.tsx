@@ -19,14 +19,70 @@ export interface ChatState {
   error: string | null;
 }
 
-// Initial Chat State
-const initialState: ChatState = {
-  chatHistory: [],
-  selectedPapers: [],
-  lastPaperIds: '',
-  isLoading: false,
-  error: null,
+// LocalStorage keys
+const CHAT_STORAGE_KEY = 'ai-research-explorer-chat';
+const SELECTED_PAPERS_STORAGE_KEY = 'ai-research-explorer-selected-papers';
+
+// Persistence utilities
+const saveToLocalStorage = (key: string, data: unknown) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
 };
+
+const loadChatFromLocalStorage = (): ChatMessage[] => {
+  try {
+    const stored = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Convert timestamp strings back to Date objects
+      return parsed.map((message: ChatMessage & { timestamp: string }) => ({
+        ...message,
+        timestamp: new Date(message.timestamp),
+      }));
+    }
+  } catch (error) {
+    console.warn('Failed to load chat from localStorage:', error);
+  }
+  return [];
+};
+
+const loadPapersFromLocalStorage = (): MockPaper[] => {
+  try {
+    const stored = localStorage.getItem(SELECTED_PAPERS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.warn('Failed to load papers from localStorage:', error);
+  }
+  return [];
+};
+
+// Load initial state from localStorage
+const getInitialState = (): ChatState => {
+  const savedChatHistory = loadChatFromLocalStorage();
+  const savedSelectedPapers = loadPapersFromLocalStorage();
+
+  // Generate lastPaperIds from saved papers
+  const lastPaperIds = savedSelectedPapers
+    .map((paper) => paper.id)
+    .sort()
+    .join(',');
+
+  return {
+    chatHistory: savedChatHistory,
+    selectedPapers: savedSelectedPapers,
+    lastPaperIds,
+    isLoading: false,
+    error: null,
+  };
+};
+
+// Initial Chat State
+const initialState: ChatState = getInitialState();
 
 // Chat Action Types
 export type ChatAction =
@@ -48,6 +104,8 @@ const generateMessageId = (): string => {
 
 // Chat Reducer
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
+  let newState: ChatState;
+
   switch (action.type) {
     case 'ADD_MESSAGE': {
       const newMessage: ChatMessage = {
@@ -55,20 +113,22 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         id: generateMessageId(),
         timestamp: new Date(),
       };
-      return {
+      newState = {
         ...state,
         chatHistory: [...state.chatHistory, newMessage],
         isLoading: false,
         error: null,
       };
+      break;
     }
 
     case 'CLEAR_CHAT_HISTORY':
-      return {
+      newState = {
         ...state,
         chatHistory: [],
         error: null,
       };
+      break;
 
     case 'SET_SELECTED_PAPERS': {
       const currentPaperIds = state.selectedPapers
@@ -86,12 +146,13 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         currentPaperIds !== newPaperIds &&
         state.chatHistory.length > 0;
 
-      return {
+      newState = {
         ...state,
         selectedPapers: action.payload,
         lastPaperIds: newPaperIds,
         chatHistory: shouldClearHistory ? [] : state.chatHistory,
       };
+      break;
     }
 
     case 'ADD_SELECTED_PAPER': {
@@ -100,44 +161,60 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       if (paperExists) {
         return state; // Don't add duplicate
       }
-      return {
+      newState = {
         ...state,
         selectedPapers: [...state.selectedPapers, action.payload],
       };
+      break;
     }
 
     case 'REMOVE_SELECTED_PAPER':
-      return {
+      newState = {
         ...state,
         selectedPapers: state.selectedPapers.filter((paper) => paper.id !== action.payload),
       };
+      break;
 
     case 'CLEAR_SELECTED_PAPERS':
-      return {
+      newState = {
         ...state,
         selectedPapers: [],
       };
+      break;
 
     case 'SET_LOADING':
-      return {
+      newState = {
         ...state,
         isLoading: action.payload,
         error: action.payload ? null : state.error, // Clear error when starting new operation
       };
+      break;
 
     case 'SET_ERROR':
-      return {
+      newState = {
         ...state,
         error: action.payload,
         isLoading: false,
       };
+      break;
 
     case 'RESET_CHAT':
-      return initialState;
+      newState = getInitialState();
+      break;
 
     default:
       return state;
   }
+
+  // Save to localStorage after state changes (except for loading and error states)
+  if (action.type !== 'SET_LOADING' && action.type !== 'SET_ERROR') {
+    // Save chat history
+    saveToLocalStorage(CHAT_STORAGE_KEY, newState.chatHistory);
+    // Save selected papers
+    saveToLocalStorage(SELECTED_PAPERS_STORAGE_KEY, newState.selectedPapers);
+  }
+
+  return newState;
 }
 
 // Chat Context Interface
@@ -156,6 +233,7 @@ export interface ChatContextType {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   resetChat: () => void;
+  clearPersistedData: () => void; // New function to clear localStorage
   // Computed values
   hasSelectedPapers: boolean;
   messageCount: number;
@@ -239,6 +317,19 @@ export function ChatProvider({ children }: ChatProviderProps) {
     []
   );
 
+  const clearPersistedData = useMemo(
+    () => () => {
+      try {
+        localStorage.removeItem(CHAT_STORAGE_KEY);
+        localStorage.removeItem(SELECTED_PAPERS_STORAGE_KEY);
+        dispatch({ type: 'RESET_CHAT' });
+      } catch (error) {
+        console.warn('Failed to clear localStorage:', error);
+      }
+    },
+    []
+  );
+
   // Computed values - memoize to prevent recalculation
   const hasSelectedPapers = useMemo(
     () => state.selectedPapers.length > 0,
@@ -266,6 +357,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setLoading,
       setError,
       resetChat,
+      clearPersistedData,
       hasSelectedPapers,
       messageCount,
       lastMessage,
@@ -281,6 +373,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       setLoading,
       setError,
       resetChat,
+      clearPersistedData,
       hasSelectedPapers,
       messageCount,
       lastMessage,
