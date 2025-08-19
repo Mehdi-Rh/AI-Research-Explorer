@@ -311,7 +311,6 @@ const SearchPage: React.FC = () => {
     if (state.filters.yearRange.min !== MIN_YEAR || state.filters.yearRange.max !== CURRENT_YEAR)
       if (state.filters.citationRange.min !== 0 || state.filters.citationRange.max !== 100000)
         count++;
-    console.log({ count });
 
     return count;
   }, [state.filters]);

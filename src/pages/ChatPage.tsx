@@ -38,7 +38,7 @@ const ChatPage: React.FC = () => {
     }
 
     if (paperCount >= 2 && paperCount <= 3) {
-      return ['Compare these research papers'];
+      return ['Compare these selected research papers'];
     }
 
     if (paperCount > 5) {
@@ -49,21 +49,7 @@ const ChatPage: React.FC = () => {
   };
 
   const handleSuggestedPrompt = async (prompt: string) => {
-    let fullPrompt = prompt;
-
-    // Add context when sending the actual message
-    if (prompt === 'Summarize this research paper') {
-      const paper = state.selectedPapers[0];
-      fullPrompt = `Summarize this research paper: ${paper.abstract}`;
-    } else if (prompt === 'Extract main topics from this paper') {
-      const paper = state.selectedPapers[0];
-      fullPrompt = `Extract main topics from: ${paper.abstract}`;
-    } else if (prompt === 'Compare these research papers') {
-      const titles = state.selectedPapers.map((paper) => paper.title).join(', ');
-      fullPrompt = `Compare these research papers: ${titles}`;
-    } else if (prompt === 'Perform a trend analysis of these research papers') {
-      fullPrompt = `Perform a trend analysis of these ${state.selectedPapers.length} research papers`;
-    }
+    const fullPrompt = prompt;
 
     await sendMessage(fullPrompt);
   };

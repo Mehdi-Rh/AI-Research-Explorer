@@ -1,6 +1,7 @@
 import { useContext, useCallback } from 'react';
 import ChatContext from '../contexts/ChatContext';
 import type { ChatContextType } from '../contexts/ChatContext';
+import { sendMessageToCohere } from './useAI';
 
 export function useChat(): ChatContextType & {
   sendMessage: (userMessage: string) => Promise<void>;
@@ -27,21 +28,39 @@ export function useChat(): ChatContextType & {
 
         // Mock API call with setTimeout to simulate AI API delay
         await new Promise((resolve) => {
-          setTimeout(() => {
-            // Generate mock AI response
-            const selectedPapersContext =
-              context.state.selectedPapers.length > 0
-                ? ` I can see you have ${context.state.selectedPapers.length} selected paper${
-                    context.state.selectedPapers.length > 1 ? 's' : ''
-                  } for context: ${context.state.selectedPapers
-                    .map((paper) => `"${paper.title}"`)
-                    .join(', ')}.`
-                : ' No papers are currently selected for context.';
+          setTimeout(async () => {
+            // Generate context for AI
+            const selectedPapers = context.state.selectedPapers;
+            let contextualPrompt: string;
 
-            const aiResponse = `Mock AI response for: "${userMessage}"${selectedPapersContext}`;
+            if (selectedPapers.length > 0) {
+              const papersInfo = selectedPapers
+                .map(
+                  (paper, idx) =>
+                    `${idx + 1}. Title: "${paper.title}"\n   Abstract: ${
+                      paper.abstract
+                    }\n   Authors: ${paper.authors.join(', ')}\n   Year: ${paper.year}`
+                )
+                .join('\n\n');
+
+              contextualPrompt = `Based on the following research papers, please answer this question: "${userMessage.trim()}"\n\nSelected Papers:\n${papersInfo}\n\nPlease provide a comprehensive answer based on these papers.`;
+            } else {
+              contextualPrompt = userMessage.trim();
+            }
+
+            const aiResponse = await sendMessageToCohere(contextualPrompt);
 
             // Add AI response to chat history
-            context.addMessage('ai', aiResponse);
+            let responseText = 'An error has occurred';
+            if (aiResponse?.message?.content) {
+              // Handle different content types from Cohere
+              const content = aiResponse.message.content[0];
+              if (content && 'text' in content) {
+                responseText = content.text;
+              }
+            }
+
+            context.addMessage('ai', responseText);
 
             // Clear loading state
             context.setLoading(false);
