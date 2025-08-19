@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import { Typography, Box, Divider, Paper } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import rehypeHighlight from 'rehype-highlight';
+import MermaidDiagram from './MermaidDiagram';
 import 'highlight.js/styles/github.css'; // You can change this to other themes
 
 const StyledMarkdown = styled(Box)(({ theme }) => ({
@@ -149,7 +150,10 @@ const MarkdownText: React.FC<MarkdownTextProps> = ({ text, variant = 'body1' }) 
             </Typography>
           ),
           code: ({ children, className }) => {
-            const isInline = !className || !className.includes('language-');
+            const isInline = !className || !className.includes('hljs language-');
+            const language = className ? className.replace('hljs language-', '') : '';
+            const codeContent = String(children).replace(/\n$/, '');
+
             if (isInline) {
               return (
                 <Typography
@@ -167,6 +171,12 @@ const MarkdownText: React.FC<MarkdownTextProps> = ({ text, variant = 'body1' }) 
                 </Typography>
               );
             }
+
+            // Check if it's a Mermaid diagram
+            if (language === 'mermaid') {
+              return <MermaidDiagram chart={codeContent} />;
+            }
+
             return (
               <Paper
                 variant="outlined"

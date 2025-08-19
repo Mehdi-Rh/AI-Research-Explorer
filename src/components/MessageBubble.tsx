@@ -38,7 +38,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
       {/* Message Content */}
       <Box
         sx={{
-          maxWidth: '70%',
           display: 'flex',
           flexDirection: 'column',
           alignItems: isUser ? 'flex-end' : 'flex-start',
@@ -55,17 +54,22 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             borderTopRightRadius: isUser ? 0.5 : 2,
             borderTopLeftRadius: isAI ? 0.5 : 2,
             wordBreak: 'break-word',
+            width: '100%',
           }}
         >
-          <Typography
-            variant="body1"
-            sx={{
-              whiteSpace: 'pre-wrap',
-              lineHeight: 1.4,
-            }}
-          >
-            {isAI ? <MarkdownText text={message.text} variant="body1" /> : message.text}
-          </Typography>
+          {isAI ? (
+            <MarkdownText text={message.text} variant="body1" />
+          ) : (
+            <Typography
+              variant="body1"
+              sx={{
+                whiteSpace: 'pre-wrap',
+                lineHeight: 1.4,
+              }}
+            >
+              {message.text}
+            </Typography>
+          )}
         </Paper>
 
         {/* Timestamp */}
