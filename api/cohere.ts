@@ -1,5 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
+// Vercel serverless function for Cohere API proxy
 interface CohereRequest {
   prompt: string;
   model?: string;
@@ -11,7 +10,27 @@ interface CohereResponse {
   };
 }
 
+interface VercelRequest {
+  method?: string;
+  body: CohereRequest | unknown;
+}
+
+interface VercelResponse {
+  status: (code: number) => VercelResponse;
+  json: (data: Record<string, unknown>) => void;
+  end: () => void;
+  setHeader: (name: string, value: string) => void;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Check if fetch is available (Node 18+ should have it)
+  if (typeof fetch === 'undefined') {
+    console.error('fetch is not available in this runtime');
+    return res.status(500).json({ 
+      error: 'Runtime error: fetch not available',
+      runtime: process.version 
+    });
+  }
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -38,16 +57,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('Environment check:', {
       hasApiKey: !!apiKey,
       apiKeyLength: apiKey?.length || 0,
-      apiKeyStart: apiKey?.substring(0, 4) || 'none'
+      apiKeyStart: apiKey?.substring(0, 4) || 'none',
     });
-    
+
     if (!apiKey) {
       console.error('COHERE_API_KEY environment variable not set');
       return res.status(500).json({ error: 'Server configuration error: Missing API key' });
     }
 
     // Parse and validate request body
-    const requestData: CohereRequest = req.body;
+    const requestData = req.body as CohereRequest;
 
     if (!requestData.prompt || typeof requestData.prompt !== 'string') {
       return res.status(400).json({ error: 'Valid prompt is required' });
@@ -66,7 +85,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('Making request to Cohere API...', {
       model: coherePayload.model,
-      promptLength: coherePayload.messages[0].content.length
+      promptLength: coherePayload.messages[0].content.length,
     });
 
     // Make request to Cohere API
@@ -112,7 +131,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Proxy API error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      type: typeof error
+      type: typeof error,
     });
 
     return res.status(500).json({
