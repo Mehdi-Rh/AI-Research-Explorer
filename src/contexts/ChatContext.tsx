@@ -87,6 +87,7 @@ const initialState: ChatState = getInitialState();
 // Chat Action Types
 export type ChatAction =
   | { type: 'ADD_MESSAGE'; payload: Omit<ChatMessage, 'id' | 'timestamp'> }
+  | { type: 'UPDATE_LAST_MESSAGE'; payload: { role: 'user' | 'ai'; text: string } }
   | { type: 'CLEAR_CHAT_HISTORY' }
   | { type: 'SET_SELECTED_PAPERS'; payload: MockPaper[] }
   | { type: 'ADD_SELECTED_PAPER'; payload: MockPaper }
@@ -119,6 +120,39 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         isLoading: false,
         error: null,
       };
+      break;
+    }
+
+    case 'UPDATE_LAST_MESSAGE': {
+      if (state.chatHistory.length === 0) {
+        // If no messages exist, add a new one
+        const newMessage: ChatMessage = {
+          ...action.payload,
+          id: generateMessageId(),
+          timestamp: new Date(),
+        };
+        newState = {
+          ...state,
+          chatHistory: [newMessage],
+          isLoading: false,
+          error: null,
+        };
+      } else {
+        // Update the last message
+        const updatedHistory = [...state.chatHistory];
+        const lastMessageIndex = updatedHistory.length - 1;
+        updatedHistory[lastMessageIndex] = {
+          ...updatedHistory[lastMessageIndex],
+          text: action.payload.text,
+          timestamp: new Date(),
+        };
+        newState = {
+          ...state,
+          chatHistory: updatedHistory,
+          isLoading: false,
+          error: null,
+        };
+      }
       break;
     }
 
@@ -223,6 +257,7 @@ export interface ChatContextType {
   dispatch: React.Dispatch<ChatAction>;
   // Message functions
   addMessage: (role: 'user' | 'ai', text: string) => void;
+  updateLastMessage: (role: 'user' | 'ai', text: string) => void;
   clearChatHistory: () => void;
   // Selected papers functions
   setSelectedPapers: (papers: MockPaper[]) => void;
@@ -255,6 +290,13 @@ export function ChatProvider({ children }: ChatProviderProps) {
   const addMessage = useMemo(
     () => (role: 'user' | 'ai', text: string) => {
       dispatch({ type: 'ADD_MESSAGE', payload: { role, text } });
+    },
+    []
+  );
+
+  const updateLastMessage = useMemo(
+    () => (role: 'user' | 'ai', text: string) => {
+      dispatch({ type: 'UPDATE_LAST_MESSAGE', payload: { role, text } });
     },
     []
   );
@@ -349,6 +391,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
       state,
       dispatch,
       addMessage,
+      updateLastMessage,
       clearChatHistory,
       setSelectedPapers,
       addSelectedPaper,
@@ -365,6 +408,7 @@ export function ChatProvider({ children }: ChatProviderProps) {
     [
       state,
       addMessage,
+      updateLastMessage,
       clearChatHistory,
       setSelectedPapers,
       addSelectedPaper,

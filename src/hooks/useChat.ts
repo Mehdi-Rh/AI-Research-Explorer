@@ -1,7 +1,7 @@
 import { useContext, useCallback } from 'react';
 import ChatContext from '../contexts/ChatContext';
 import type { ChatContextType } from '../contexts/ChatContext';
-import { sendMessageToCohere } from './useAI';
+import { sendMessageToCohere, type RetryStatus } from './useAI';
 
 export function useChat(): ChatContextType & {
   sendMessage: (userMessage: string) => Promise<void>;
@@ -29,6 +29,9 @@ export function useChat(): ChatContextType & {
         // Mock API call with setTimeout to simulate AI API delay
         await new Promise((resolve) => {
           setTimeout(async () => {
+            // Track if we've added a retry status message
+            let retryMessageAdded = false;
+
             try {
               // Generate context for AI
               const selectedPapers = context.state.selectedPapers;
@@ -49,7 +52,33 @@ export function useChat(): ChatContextType & {
                 contextualPrompt = userMessage.trim();
               }
 
-              const aiResponse = await sendMessageToCohere(contextualPrompt);
+              const aiResponse = await sendMessageToCohere(
+                contextualPrompt,
+                (retryStatus: RetryStatus) => {
+                  // Provide real-time retry status to users
+                  if (retryStatus.isRetrying) {
+                    let statusMessage = `⏳ **Retrying AI Request**\n\n`;
+                    statusMessage += `📊 Attempt ${retryStatus.attempt} of ${retryStatus.maxRetries}\n\n`;
+
+                    if (retryStatus.nextRetryIn) {
+                      const secondsToWait = Math.ceil(retryStatus.nextRetryIn / 1000);
+                      statusMessage += `⏱️ Next retry in ${secondsToWait} seconds...`;
+                    } else {
+                      statusMessage += `🔄 Processing retry...`;
+                    }
+
+                    statusMessage += `\n\n💡 *The AI service is experiencing high demand. Please wait while we retry your request.*`;
+
+                    // Add retry status message only once, then update it
+                    if (!retryMessageAdded) {
+                      context.addMessage('ai', statusMessage);
+                      retryMessageAdded = true;
+                    } else {
+                      context.updateLastMessage('ai', statusMessage);
+                    }
+                  }
+                }
+              );
 
               // Add AI response to chat history
               let responseText = 'An error has occurred';
@@ -61,7 +90,13 @@ export function useChat(): ChatContextType & {
                 }
               }
 
-              context.addMessage('ai', responseText);
+              // If we added a retry message, update it with the final response
+              // Otherwise, add a new message
+              if (retryMessageAdded) {
+                context.updateLastMessage('ai', responseText);
+              } else {
+                context.addMessage('ai', responseText);
+              }
             } catch (aiError) {
               // Handle AI API errors specifically
               console.error('AI API Error:', aiError);
@@ -90,17 +125,20 @@ export function useChat(): ChatContextType & {
                   errorMsg.includes('too many requests')
                 ) {
                   errorMessage +=
-                    '⏱️ **Rate Limit (429)**: Too many requests. Please wait a moment and try again.';
+                    '⏱️ **Rate Limit (429)**: Request failed after retries due to high demand. Please wait longer before trying again.';
                 } else if (errorMsg.includes('499') || errorMsg.includes('cancelled')) {
                   errorMessage +=
                     '🚫 **Request Cancelled (499)**: Request was cancelled. Please try again.';
                 } else if (
                   errorMsg.includes('500') ||
+                  errorMsg.includes('502') ||
+                  errorMsg.includes('503') ||
+                  errorMsg.includes('504') ||
                   errorMsg.includes('server error') ||
                   errorMsg.includes('internal')
                 ) {
                   errorMessage +=
-                    '🔧 **Server Error (500)**: Internal server error. Please try again later or contact support.';
+                    '🔧 **Server Error (5xx)**: Service failed after retries. Please try again later or contact support.';
                 } else if (errorMsg.includes('timeout')) {
                   errorMessage +=
                     '⏰ **Timeout**: The AI service is taking too long to respond. Please try again.';
@@ -118,7 +156,13 @@ export function useChat(): ChatContextType & {
               errorMessage +=
                 '\n\n💡 *Tip: You can still browse and select research papers while we resolve this issue.*';
 
-              context.addMessage('ai', errorMessage);
+              // If we added a retry message, update it with the error
+              // Otherwise, add a new error message
+              if (retryMessageAdded) {
+                context.updateLastMessage('ai', errorMessage);
+              } else {
+                context.addMessage('ai', errorMessage);
+              }
             }
 
             // Clear loading state
