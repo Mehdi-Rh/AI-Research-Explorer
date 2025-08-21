@@ -3,8 +3,5 @@
     "api/cohere.ts": {
       "maxDuration": 30
     }
-  },
-  "env": {
-    "COHERE_API_KEY": "@cohere-api-key"
   }
 }
