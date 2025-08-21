@@ -105,14 +105,14 @@ const initialFilters: SearchFilters = {
 const initialState: SearchState = {
   query: '',
   filters: initialFilters,
-  results: [],
+  results: mockPapers, // Load all papers by default
   isLoading: false,
   error: null,
   sortBy: 'relevance',
   sortOrder: 'desc',
   currentPage: 1,
   itemsPerPage: 10,
-  totalResults: 0,
+  totalResults: mockPapers.length, // Set total results to all papers
   searchHistory: getSearchHistoryFromStorage(),
 };
 
