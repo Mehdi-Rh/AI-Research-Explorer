@@ -3,7 +3,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { SearchProvider } from './contexts/SearchContext';
 import { ChatProvider } from './contexts/ChatContext';
-import { RetryTestPanel } from './components/RetryTestPanel';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import ChatPage from './pages/ChatPage';

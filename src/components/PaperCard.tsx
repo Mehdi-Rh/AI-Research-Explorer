@@ -2,13 +2,11 @@ import React from 'react';
 import {
   Card,
   CardContent,
-  CardActions,
   Typography,
   Chip,
   Box,
   Checkbox,
   FormControlLabel,
-  Divider,
 } from '@mui/material';
 
 import type { MockPaper } from '../types/paper';

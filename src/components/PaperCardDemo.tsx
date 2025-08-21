@@ -50,7 +50,6 @@ const PaperCardDemo: React.FC = () => {
             isSelected={selectedPapers.has(paper.id)}
             onSelectionChange={handleSelectionChange}
             maxAbstractLength={150}
-            showActions={true}
           />
         ))}
       </Box>
