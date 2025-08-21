@@ -1,8 +1,7 @@
 {
   "functions": {
-    "api/cohere.ts": {
-      "maxDuration": 30,
-      "runtime": "nodejs18.x"
+    "api/cohere.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

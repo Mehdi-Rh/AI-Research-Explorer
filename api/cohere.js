@@ -1,36 +1,4 @@
-// Vercel serverless function for Cohere API proxy
-interface CohereRequest {
-  prompt: string;
-  model?: string;
-}
-
-interface CohereResponse {
-  message?: {
-    content: Array<{ text: string }>;
-  };
-}
-
-interface VercelRequest {
-  method?: string;
-  body: CohereRequest | unknown;
-}
-
-interface VercelResponse {
-  status: (code: number) => VercelResponse;
-  json: (data: Record<string, unknown>) => void;
-  end: () => void;
-  setHeader: (name: string, value: string) => void;
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Check if fetch is available (Node 18+ should have it)
-  if (typeof fetch === 'undefined') {
-    console.error('fetch is not available in this runtime');
-    return res.status(500).json({
-      error: 'Runtime error: fetch not available',
-      runtime: process.version,
-    });
-  }
+export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -66,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Parse and validate request body
-    const requestData = req.body as CohereRequest;
+    const requestData = req.body;
 
     if (!requestData.prompt || typeof requestData.prompt !== 'string') {
       return res.status(400).json({ error: 'Valid prompt is required' });
@@ -77,7 +45,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: requestData.model || 'command-a-03-2025',
       messages: [
         {
-          role: 'user' as const,
+          role: 'user',
           content: requestData.prompt,
         },
       ],
@@ -111,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const cohereResponse: CohereResponse = await response.json();
+    const cohereResponse = await response.json();
 
     // Extract text from Cohere response
     let responseText = 'No response generated';
