@@ -35,9 +35,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // Validate API key exists
     const apiKey = process.env.COHERE_API_KEY;
+    console.log('Environment check:', {
+      hasApiKey: !!apiKey,
+      apiKeyLength: apiKey?.length || 0,
+      apiKeyStart: apiKey?.substring(0, 4) || 'none'
+    });
+    
     if (!apiKey) {
       console.error('COHERE_API_KEY environment variable not set');
-      return res.status(500).json({ error: 'Server configuration error' });
+      return res.status(500).json({ error: 'Server configuration error: Missing API key' });
     }
 
     // Parse and validate request body
@@ -58,7 +64,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ],
     };
 
-    console.log('Making request to Cohere API...');
+    console.log('Making request to Cohere API...', {
+      model: coherePayload.model,
+      promptLength: coherePayload.messages[0].content.length
+    });
 
     // Make request to Cohere API
     const response = await fetch('https://api.cohere.com/v2/chat', {
@@ -100,7 +109,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
   } catch (error) {
-    console.error('Proxy API error:', error);
+    console.error('Proxy API error:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error
+    });
 
     return res.status(500).json({
       error: 'Internal server error',
