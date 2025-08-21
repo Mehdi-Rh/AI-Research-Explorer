@@ -26,9 +26,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Check if fetch is available (Node 18+ should have it)
   if (typeof fetch === 'undefined') {
     console.error('fetch is not available in this runtime');
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Runtime error: fetch not available',
-      runtime: process.version 
+      runtime: process.version,
     });
   }
   // Enable CORS
