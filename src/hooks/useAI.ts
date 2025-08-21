@@ -1,8 +1,8 @@
-import { CohereClientV2 } from 'cohere-ai';
+// Production deployment: Use serverless proxy to protect API keys
+const API_ENDPOINT = '/api/cohere';
 
-const cohere = new CohereClientV2({
-  token: import.meta.env.VITE_COHERE_API_KEY,
-});
+// For development, we need a fallback since we don't have the serverless function running locally
+const isDevelopment = import.meta.env.DEV;
 
 interface RetryConfig {
   maxRetries: number;
@@ -16,6 +16,15 @@ interface RetryStatus {
   maxRetries: number;
   nextRetryIn?: number;
   isRetrying: boolean;
+}
+
+interface ProxyResponse {
+  success: boolean;
+  message: {
+    content: Array<{ text: string }>;
+  };
+  error?: string;
+  details?: string;
 }
 
 export type { RetryStatus };
@@ -88,7 +97,7 @@ export async function testRetryMechanism(): Promise<unknown> {
   console.log('🧪 Testing retry mechanism with reduced delays...');
 
   return sendMessageToCohere(
-    'Test message for retry mechanism',
+    'Test message: Hello, this is a test of the retry mechanism.',
     (status) => {
       console.log(`🔄 Retry Status:`, {
         attempt: status.attempt,
@@ -124,17 +133,80 @@ export async function sendMessageToCohere(
         });
       }
 
-      const response = await cohere.chat({
-        model: 'command-a-03-2025',
-        messages: [
-          {
-            role: 'user',
-            content: prompt,
+      // In development, check if we have a local API key for direct access
+      if (isDevelopment && import.meta.env.VITE_COHERE_API_KEY) {
+        // Direct API call for development (keeping the original behavior)
+        const response = await fetch('https://api.cohere.com/v2/chat', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${import.meta.env.VITE_COHERE_API_KEY}`,
+            'Content-Type': 'application/json',
           },
-        ],
-      });
+          body: JSON.stringify({
+            model: 'command-a-03-2025',
+            messages: [
+              {
+                role: 'user',
+                content: prompt,
+              },
+            ],
+          }),
+        });
 
-      return response;
+        if (!response.ok) {
+          const errorText = await response.text();
+          const error = new Error(`HTTP ${response.status}: ${errorText}`);
+          (error as unknown as { status: number }).status = response.status;
+          throw error;
+        }
+
+        const data = await response.json();
+        return {
+          message: {
+            content: data.message?.content || [{ text: 'No response generated' }],
+          },
+        };
+      } else {
+        // Use serverless proxy for production or when no local API key
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt,
+            model: 'command-a-03-2025',
+          }),
+        });
+
+        if (!response.ok) {
+          // Extract error details for better error handling
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch {
+            errorMessage = (await response.text()) || errorMessage;
+          }
+
+          const error = new Error(errorMessage);
+          (error as unknown as { status: number }).status = response.status;
+          throw error;
+        }
+
+        const data: ProxyResponse = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.error || 'API request failed');
+        }
+
+        // Return response in the same format as Cohere client
+        return {
+          message: {
+            content: data.message.content,
+          },
+        };
+      }
     } catch (error) {
       lastError = error;
       console.error(`Attempt ${attempt + 1} failed:`, error);
