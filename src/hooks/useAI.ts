@@ -77,6 +77,34 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Test utility functions for simulating errors
+export function createMockError(statusCode: number, message?: string): Error {
+  const error = new Error(message || `HTTP Error ${statusCode}`);
+  (error as unknown as { status: number }).status = statusCode;
+  return error;
+}
+
+export async function testRetryMechanism(): Promise<unknown> {
+  console.log('🧪 Testing retry mechanism with reduced delays...');
+
+  return sendMessageToCohere(
+    'Test message for retry mechanism',
+    (status) => {
+      console.log(`🔄 Retry Status:`, {
+        attempt: status.attempt,
+        maxRetries: status.maxRetries,
+        isRetrying: status.isRetrying,
+        nextRetryIn: status.nextRetryIn ? `${Math.ceil(status.nextRetryIn / 1000)}s` : undefined,
+      });
+    },
+    {
+      maxRetries: 2, // Reduced for faster testing
+      baseDelay: 500, // Reduced delay for testing
+      maxDelay: 2000,
+    }
+  );
+}
+
 export async function sendMessageToCohere(
   prompt: string,
   onRetryStatus?: (status: RetryStatus) => void,

@@ -3,6 +3,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { SearchProvider } from './contexts/SearchContext';
 import { ChatProvider } from './contexts/ChatContext';
+import { RetryTestPanel } from './components/RetryTestPanel';
 import HomePage from './pages/HomePage';
 import SearchPage from './pages/SearchPage';
 import ChatPage from './pages/ChatPage';
@@ -56,6 +57,8 @@ function App() {
               <Route path="/search" element={<SearchPage />} />
               <Route path="/chat" element={<ChatPage />} />
             </Routes>
+            {/* Add retry test panel for testing */}
+            {/* <RetryTestPanel /> */}
           </Router>
         </ChatProvider>
       </SearchProvider>
