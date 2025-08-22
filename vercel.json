@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/cohere.js": {
+    "api/cohere.ts": {
       "maxDuration": 30
     }
   },
