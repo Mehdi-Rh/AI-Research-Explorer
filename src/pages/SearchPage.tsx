@@ -426,13 +426,24 @@ const SearchPage: React.FC = () => {
               {/* View Insights Button */}
               {!state.isLoading && sortedResults.length > 0 && (
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   startIcon={<AnalyticsIcon />}
                   onClick={handleViewInsights}
-                  size="small"
+                  size="large"
                   sx={{
                     textTransform: 'none',
-                    borderRadius: 1,
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    px: 3,
+                    py: 1,
+                    bgcolor: 'primary.main',
+                    '&:hover': {
+                      bgcolor: 'primary.dark',
+                      transform: 'translateY(-1px)',
+                      boxShadow: 2,
+                    },
+                    transition: 'all 0.2s ease-in-out',
                   }}
                 >
                   View Insights
