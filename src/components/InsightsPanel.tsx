@@ -14,23 +14,7 @@ import {
   Chip,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
-// @ts-expect-error - Chart.js modules work fine at runtime
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-} from 'chart.js';
-// @ts-expect-error - react-chartjs-2 works fine at runtime
-import { Bar, Pie } from 'react-chartjs-2';
 import type { MockPaper } from '../types/paper';
-
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
 interface InsightsPanelProps {
   open: boolean;
@@ -110,9 +94,9 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
   const generateInsights = () => {
     if (!papers.length) {
       return {
-        timeline: { labels: [], datasets: [] },
+        timeline: [],
         wordCloud: [],
-        metrics: { labels: [], datasets: [] },
+        topics: [],
       };
     }
 
@@ -122,21 +106,9 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
       return acc;
     }, {} as Record<number, number>);
 
-    const timelineLabels = Object.keys(yearCounts).map(Number).sort().map(String);
-    const timelineData = timelineLabels.map((year) => yearCounts[Number(year)]);
-
-    const timeline = {
-      labels: timelineLabels,
-      datasets: [
-        {
-          label: 'Publications',
-          data: timelineData,
-          backgroundColor: theme.palette.primary.main,
-          borderColor: theme.palette.primary.dark,
-          borderWidth: 1,
-        },
-      ],
-    };
+    const timeline = Object.entries(yearCounts)
+      .map(([year, count]) => ({ year: parseInt(year), count }))
+      .sort((a, b) => a.year - b.year);
 
     // Word Cloud Data (extract keywords from abstracts)
     const wordFreq: Record<string, number> = {};
@@ -243,56 +215,128 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
       return acc;
     }, {} as Record<string, number>);
 
-    const metrics = {
-      labels: Object.keys(topicCounts),
-      datasets: [
-        {
-          data: Object.values(topicCounts),
-          backgroundColor: [
-            theme.palette.primary.main,
-            theme.palette.secondary.main,
-            theme.palette.success.main,
-            theme.palette.warning.main,
-            theme.palette.error.main,
-            theme.palette.info.main,
-          ],
-          borderWidth: 2,
-          borderColor: theme.palette.background.paper,
-        },
-      ],
-    };
+    const topics = Object.entries(topicCounts).map(([label, count]) => ({
+      label,
+      count,
+      percentage: Math.round((count / papers.length) * 100),
+    }));
 
-    return { timeline, wordCloud, metrics };
+    return { timeline, wordCloud, topics };
   };
 
   const insights = generateInsights();
 
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top' as const,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          precision: 0,
-        },
-      },
-    },
+  // Simple bar chart component using Material-UI
+  const SimpleBarChart: React.FC<{ data: Array<{ year: number; count: number }> }> = ({ data }) => {
+    if (!data.length) return null;
+    
+    const maxCount = Math.max(...data.map(d => d.count));
+    
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: 250 }}>
+        {data.map(({ year, count }) => (
+          <Box key={year} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" sx={{ minWidth: 50 }}>
+              {year}
+            </Typography>
+            <Box sx={{ flex: 1, bgcolor: 'grey.100', borderRadius: 1, overflow: 'hidden' }}>
+              <Box
+                sx={{
+                  height: 24,
+                  bgcolor: theme.palette.primary.main,
+                  width: `${(count / maxCount) * 100}%`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  px: 1,
+                  transition: 'width 0.3s ease',
+                }}
+              >
+                <Typography variant="caption" sx={{ color: 'white', fontWeight: 'bold' }}>
+                  {count}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    );
   };
 
-  const pieOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-      },
-    },
+  // Simple pie chart component using Material-UI
+  const SimplePieChart: React.FC<{ data: Array<{ label: string; count: number; percentage: number }> }> = ({ data }) => {
+    if (!data.length) return null;
+
+    const colors = [
+      theme.palette.primary.main,
+      theme.palette.secondary.main,
+      theme.palette.success.main,
+      theme.palette.warning.main,
+      theme.palette.error.main,
+      theme.palette.info.main,
+    ];
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: 250 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {data.map(({ label, count, percentage }, index) => (
+            <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: '45%' }}>
+              <Box
+                sx={{
+                  width: 16,
+                  height: 16,
+                  bgcolor: colors[index % colors.length],
+                  borderRadius: '50%',
+                }}
+              />
+              <Typography variant="body2">
+                {label} ({count}, {percentage}%)
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+        
+        {/* Simple circular progress visualization */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Box sx={{ position: 'relative', width: 120, height: 120 }}>
+            <svg width="120" height="120" viewBox="0 0 120 120">
+              <circle
+                cx="60"
+                cy="60"
+                r="50"
+                fill="none"
+                stroke={theme.palette.grey[200]}
+                strokeWidth="10"
+              />
+              {data.reduce((acc, { percentage }, index) => {
+                const angle = (percentage / 100) * 360;
+                const startAngle = acc.currentAngle;
+                const endAngle = startAngle + angle;
+                
+                const x1 = 60 + 50 * Math.cos((startAngle - 90) * Math.PI / 180);
+                const y1 = 60 + 50 * Math.sin((startAngle - 90) * Math.PI / 180);
+                const x2 = 60 + 50 * Math.cos((endAngle - 90) * Math.PI / 180);
+                const y2 = 60 + 50 * Math.sin((endAngle - 90) * Math.PI / 180);
+                
+                const largeArcFlag = angle > 180 ? 1 : 0;
+                
+                acc.arcs.push(
+                  <path
+                    key={index}
+                    d={`M 60 60 L ${x1} ${y1} A 50 50 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                    fill={colors[index % colors.length]}
+                    opacity={0.8}
+                  />
+                );
+                
+                acc.currentAngle = endAngle;
+                return acc;
+              }, { arcs: [] as React.ReactElement[], currentAngle: 0 }).arcs}
+            </svg>
+          </Box>
+        </Box>
+      </Box>
+    );
   };
 
   const LoadingCard: React.FC<{ title: string; height?: number }> = ({ title, height = 250 }) => (
@@ -324,16 +368,14 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
       <Stack spacing={3}>
         {/* Publication Timeline */}
         {loading ? (
-          <LoadingCard title="Publication Timeline" height={300} />
+          <LoadingCard title="Publication Timeline" height={250} />
         ) : (
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Publication Timeline
               </Typography>
-              <Box sx={{ height: 300 }}>
-                <Bar data={insights.timeline} options={chartOptions} />
-              </Box>
+              <SimpleBarChart data={insights.timeline} />
             </CardContent>
           </Card>
         )}
@@ -354,16 +396,14 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
 
         {/* Topic Distribution */}
         {loading ? (
-          <LoadingCard title="Topic Distribution" height={300} />
+          <LoadingCard title="Topic Distribution" height={250} />
         ) : (
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Topic Distribution
               </Typography>
-              <Box sx={{ height: 300 }}>
-                <Pie data={insights.metrics} options={pieOptions} />
-              </Box>
+              <SimplePieChart data={insights.topics} />
             </CardContent>
           </Card>
         )}
