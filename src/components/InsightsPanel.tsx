@@ -229,9 +229,9 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
   // Simple bar chart component using Material-UI
   const SimpleBarChart: React.FC<{ data: Array<{ year: number; count: number }> }> = ({ data }) => {
     if (!data.length) return null;
-    
-    const maxCount = Math.max(...data.map(d => d.count));
-    
+
+    const maxCount = Math.max(...data.map((d) => d.count));
+
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, height: 250 }}>
         {data.map(({ year, count }) => (
@@ -264,7 +264,9 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
   };
 
   // Simple pie chart component using Material-UI
-  const SimplePieChart: React.FC<{ data: Array<{ label: string; count: number; percentage: number }> }> = ({ data }) => {
+  const SimplePieChart: React.FC<{
+    data: Array<{ label: string; count: number; percentage: number }>;
+  }> = ({ data }) => {
     if (!data.length) return null;
 
     const colors = [
@@ -280,7 +282,10 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: 250 }}>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
           {data.map(({ label, count, percentage }, index) => (
-            <Box key={label} sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: '45%' }}>
+            <Box
+              key={label}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: '45%' }}
+            >
               <Box
                 sx={{
                   width: 16,
@@ -295,7 +300,7 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
             </Box>
           ))}
         </Box>
-        
+
         {/* Simple circular progress visualization */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
           <Box sx={{ position: 'relative', width: 120, height: 120 }}>
@@ -308,30 +313,35 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
                 stroke={theme.palette.grey[200]}
                 strokeWidth="10"
               />
-              {data.reduce((acc, { percentage }, index) => {
-                const angle = (percentage / 100) * 360;
-                const startAngle = acc.currentAngle;
-                const endAngle = startAngle + angle;
-                
-                const x1 = 60 + 50 * Math.cos((startAngle - 90) * Math.PI / 180);
-                const y1 = 60 + 50 * Math.sin((startAngle - 90) * Math.PI / 180);
-                const x2 = 60 + 50 * Math.cos((endAngle - 90) * Math.PI / 180);
-                const y2 = 60 + 50 * Math.sin((endAngle - 90) * Math.PI / 180);
-                
-                const largeArcFlag = angle > 180 ? 1 : 0;
-                
-                acc.arcs.push(
-                  <path
-                    key={index}
-                    d={`M 60 60 L ${x1} ${y1} A 50 50 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
-                    fill={colors[index % colors.length]}
-                    opacity={0.8}
-                  />
-                );
-                
-                acc.currentAngle = endAngle;
-                return acc;
-              }, { arcs: [] as React.ReactElement[], currentAngle: 0 }).arcs}
+              {
+                data.reduce(
+                  (acc, { percentage }, index) => {
+                    const angle = (percentage / 100) * 360;
+                    const startAngle = acc.currentAngle;
+                    const endAngle = startAngle + angle;
+
+                    const x1 = 60 + 50 * Math.cos(((startAngle - 90) * Math.PI) / 180);
+                    const y1 = 60 + 50 * Math.sin(((startAngle - 90) * Math.PI) / 180);
+                    const x2 = 60 + 50 * Math.cos(((endAngle - 90) * Math.PI) / 180);
+                    const y2 = 60 + 50 * Math.sin(((endAngle - 90) * Math.PI) / 180);
+
+                    const largeArcFlag = angle > 180 ? 1 : 0;
+
+                    acc.arcs.push(
+                      <path
+                        key={index}
+                        d={`M 60 60 L ${x1} ${y1} A 50 50 0 ${largeArcFlag} 1 ${x2} ${y2} Z`}
+                        fill={colors[index % colors.length]}
+                        opacity={0.8}
+                      />
+                    );
+
+                    acc.currentAngle = endAngle;
+                    return acc;
+                  },
+                  { arcs: [] as React.ReactElement[], currentAngle: 0 }
+                ).arcs
+              }
             </svg>
           </Box>
         </Box>
@@ -407,29 +417,6 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ open, onClose, papers }) 
             </CardContent>
           </Card>
         )}
-
-        {/* Placeholder for Author Collaboration Network */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Author Collaboration Network
-            </Typography>
-            <Box
-              sx={{
-                height: 200,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: 'grey.50',
-                borderRadius: 1,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                Collaboration network visualization coming soon...
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
       </Stack>
     </Box>
   );
