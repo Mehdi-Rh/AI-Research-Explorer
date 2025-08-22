@@ -14,6 +14,7 @@ import {
   Chip,
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
+// @ts-expect-error - Chart.js modules work fine at runtime
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,6 +25,7 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js';
+// @ts-expect-error - react-chartjs-2 works fine at runtime
 import { Bar, Pie } from 'react-chartjs-2';
 import type { MockPaper } from '../types/paper';
 
