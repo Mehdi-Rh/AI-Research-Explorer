@@ -27,12 +27,14 @@ import {
   ViewList as ListViewIcon,
   Close as CloseIcon,
   Psychology as AIIcon,
+  Analytics as AnalyticsIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../hooks/useSearch';
 import { useChat } from '../hooks/useChat';
 import SearchBar from '../components/SearchBar';
 import PaperCard from '../components/PaperCard';
+import InsightsPanel from '../components/InsightsPanel';
 import { mockPapers } from '../data/mockPapers';
 
 type ViewMode = 'grid' | 'list';
@@ -201,6 +203,7 @@ const SearchPage: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [insightsPanelOpen, setInsightsPanelOpen] = useState(false);
   const resultsPerPage = 12;
 
   // Sync with chat selected papers when component mounts
@@ -332,6 +335,10 @@ const SearchPage: React.FC = () => {
     navigate('/chat');
   };
 
+  const handleViewInsights = () => {
+    setInsightsPanelOpen(true);
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* Header */}
@@ -373,7 +380,8 @@ const SearchPage: React.FC = () => {
               >
                 🚀 Analyze {selectedPapers.size} Selected Paper{selectedPapers.size > 1 ? 's' : ''}{' '}
                 with AI
-              </Button>{' '}
+              </Button>
+
               <SelectedPapersMenu
                 selectedPapers={selectedPapers}
                 onRemovePaper={handleRemovePaper}
@@ -415,6 +423,22 @@ const SearchPage: React.FC = () => {
 
             {/* Controls */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+              {/* View Insights Button */}
+              {!state.isLoading && sortedResults.length > 0 && (
+                <Button
+                  variant="outlined"
+                  startIcon={<AnalyticsIcon />}
+                  onClick={handleViewInsights}
+                  size="small"
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: 1,
+                  }}
+                >
+                  View Insights
+                </Button>
+              )}
+
               {/* Sort Dropdown */}
               <FormControl size="small" sx={{ minWidth: 150 }}>
                 <InputLabel>Sort by</InputLabel>
@@ -524,6 +548,13 @@ const SearchPage: React.FC = () => {
           </Paper>
         )}
       </Container>
+
+      {/* Insights Panel */}
+      <InsightsPanel
+        open={insightsPanelOpen}
+        onClose={() => setInsightsPanelOpen(false)}
+        papers={sortedResults}
+      />
     </Box>
   );
 };
