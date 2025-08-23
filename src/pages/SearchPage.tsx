@@ -20,6 +20,8 @@ import {
   Menu,
   ListItemText,
   Button,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Home,
@@ -197,9 +199,11 @@ const SearchPage: React.FC = () => {
   const navigate = useNavigate();
   const { state } = useSearch();
   const { setSelectedPapers: setChatSelectedPapers, state: chatState } = useChat();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Local state for view preferences
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  // Local state for view preferences - force list view on mobile
+  const [viewMode, setViewMode] = useState<ViewMode>(isMobile ? 'list' : 'grid');
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [selectedPapers, setSelectedPapers] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
@@ -213,6 +217,13 @@ const SearchPage: React.FC = () => {
       setSelectedPapers(paperIds);
     }
   }, [chatState.selectedPapers]); // Sync whenever chat selected papers change
+
+  // Force list view on mobile
+  useEffect(() => {
+    if (isMobile && viewMode !== 'list') {
+      setViewMode('list');
+    }
+  }, [isMobile, viewMode]);
 
   // Reset pagination when results change
   useEffect(() => {
@@ -422,7 +433,7 @@ const SearchPage: React.FC = () => {
             </Box>
 
             {/* Controls */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'nowrap' }}>
               {/* View Insights Button */}
               {!state.isLoading && sortedResults.length > 0 && (
                 <Button
@@ -456,6 +467,7 @@ const SearchPage: React.FC = () => {
                 <Select
                   value={sortBy}
                   label="Sort by"
+                  sx={{ height: '100%' }}
                   onChange={(e) => setSortBy(e.target.value as SortOption)}
                 >
                   <MenuItem value="relevance">Relevance</MenuItem>
@@ -467,21 +479,23 @@ const SearchPage: React.FC = () => {
                 </Select>
               </FormControl>
 
-              {/* View Mode Toggle */}
-              <ToggleButtonGroup
-                value={viewMode}
-                exclusive
-                onChange={handleViewModeChange}
-                aria-label="view mode"
-                size="small"
-              >
-                <ToggleButton value="grid" aria-label="grid view">
-                  <GridViewIcon />
-                </ToggleButton>
-                <ToggleButton value="list" aria-label="list view">
-                  <ListViewIcon />
-                </ToggleButton>
-              </ToggleButtonGroup>
+              {/* View Mode Toggle - Hidden on mobile */}
+              {!isMobile && (
+                <ToggleButtonGroup
+                  value={viewMode}
+                  exclusive
+                  onChange={handleViewModeChange}
+                  aria-label="view mode"
+                  size="small"
+                >
+                  <ToggleButton value="grid" aria-label="grid view">
+                    <GridViewIcon />
+                  </ToggleButton>
+                  <ToggleButton value="list" aria-label="list view">
+                    <ListViewIcon />
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              )}
             </Box>
           </Box>
         </Paper>
