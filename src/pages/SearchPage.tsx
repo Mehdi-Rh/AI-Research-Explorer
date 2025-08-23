@@ -389,7 +389,7 @@ const SearchPage: React.FC = () => {
                   },
                 }}
               >
-                🚀 Analyze {selectedPapers.size} Selected Paper{selectedPapers.size > 1 ? 's' : ''}{' '}
+                Analyze {selectedPapers.size} Selected Paper{selectedPapers.size > 1 ? 's' : ''}{' '}
                 with AI
               </Button>
 
