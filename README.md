@@ -1,8 +1,8 @@
-# AI Research Explorer - By [Your Name]
+# AI Research Explorer - By Mehdi Rahal
 
 ## Live Demo
 
-[Your deployed app URL]
+https://ai-research-explorer-psi.vercel.app/
 
 ## Setup Instructions
 
@@ -13,38 +13,22 @@
 
 ## API Configuration
 
-- Create account at [chosen AI provider]
+- Create an account at [chosen AI provider](https://cohere.com/)
 - Add API key to .env file
-- [Any specific setup instructions]
-
+ 
 ## Features Implemented
 
 - [x] Mock research paper search with filters
 - [x] AI-powered paper analysis and chat
 - [x] Results visualization and browsing
 - [x] Interactive chat interface for research questions
-- [ ] Additional bonus features (data visualizations, etc.)
+- [x] Additional bonus features (data visualizations, etc.)
 
 ## Mock Data
 
-- **Dataset Size**: [Number] research papers across [X] topics
-- **Data Generation**: [Approach used - manual, Faker.js, etc.]
-- **Topics Covered**: [List main research areas included]
-
-FAQ
-Q: Can I use additional libraries?
-A: Yes, but justify your choices in the README.
-Q: What if I can't complete everything?
-A: Focus on core requirements and document what's incomplete.
-Q: Do I need to implement authentication?
-A: No, focus on the core features. Authentication is not required for this assessment.
-Q: How realistic should the mock data be?
-A: Make it believable but don't spend too much time on content. Focus on structure and functionality.
-Q: Can I ask questions during the assessment?
-A: This is a self-contained test, but clarification questions via email are okay.
-
-Good luck! We're excited to see what you build!
-Questions? Email us at jobs@infinitgraph.ai
+- **Dataset Size**: [84] research papers across [X] topics
+- **Data Generation**: Data generated using githib copilot
+- **Topics Covered**: Machine Learning / AI / Blockchain / Energy / Climate / Drug
 
 ## Technical Decisions
 
@@ -59,16 +43,21 @@ Questions? Email us at jobs@infinitgraph.ai
 
 ## Time Breakdown
 
-- Setup & Planning: X hours
-- UI Development: X hours
-- API Integration: X hours
-- Testing & Polish: X hours
-- **Total**: X hours
+- Setup & Planning: 2 hours
+- UI Development: 6 hours
+- API Integration: 2 hours
+- Testing & Polish: 4 hours
+- **Total**: 14 hours
 
 ## Challenges & Solutions
 
-[Describe main challenges faced and how you solved them]
+The main challenge was how to design the app, I thought about making everything on the same page, but could not find an optimal solution, so for each feature, I used the Copilot to generate a draft and then make  the necessary optimizations
 
 ## Future Improvements
 
-[What you would add/improve with more time]
+Here are the main features that can be added to the app:
+- Authentication
+- Add the backend stuff (database, API integrations, etc)
+- Set a thread history instead (right now, each combination of selected papers is stored and the user should continue on it)
+- Add a feature to allow the user to take notes, save results, etc.
+- Add copy/paste functionalities for generated responses. 
