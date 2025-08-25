@@ -1,3 +1,5 @@
+import { CohereClientV2 } from 'cohere-ai';
+
 interface VercelRequest {
   method?: string;
   body: Record<string, unknown>;
@@ -13,12 +15,6 @@ interface VercelResponse {
 interface CohereRequest {
   prompt: string;
   model?: string;
-}
-
-interface CohereResponse {
-  message?: {
-    content?: Array<{ text: string }>;
-  };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -63,54 +59,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Valid prompt is required' });
     }
 
-    // Prepare Cohere API request
-    const coherePayload = {
+    // Initialize Cohere client
+    const cohere = new CohereClientV2({
+      token: apiKey,
+    });
+
+    console.log('Making request to Cohere API...', {
+      model: requestData.model || 'command-a-03-2025',
+      promptLength: requestData.prompt.length,
+    });
+
+    // Make request to Cohere API using the official SDK
+    const response = await cohere.chat({
       model: requestData.model || 'command-a-03-2025',
       messages: [
         {
-          role: 'user' as const,
+          role: 'user',
           content: requestData.prompt,
         },
       ],
-    };
-
-    console.log('Making request to Cohere API...', {
-      model: coherePayload.model,
-      promptLength: coherePayload.messages[0].content.length,
     });
-
-    // Make request to Cohere API
-    const response = await fetch('https://api.cohere.com/v2/chat', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(coherePayload),
-    });
-
-    // Handle Cohere API response
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Cohere API error (${response.status}):`, errorText);
-
-      // Return the same status code to preserve retry logic
-      return res.status(response.status).json({
-        error: `Cohere API error: ${response.status}`,
-        details: errorText,
-      });
-    }
-
-    const cohereResponse: CohereResponse = await response.json();
-
-    // Extract text from Cohere response
-    let responseText = 'No response generated';
-    if (cohereResponse.message?.content?.[0]?.text) {
-      responseText = cohereResponse.message.content[0].text;
-    }
 
     console.log('Cohere API request successful');
+
+    // Extract text from response
+    let responseText = 'No response generated';
+    if (response.message?.content) {
+      for (const contentItem of response.message.content) {
+        if ('text' in contentItem && contentItem.text) {
+          responseText = contentItem.text;
+          break;
+        }
+      }
+    }
 
     return res.status(200).json({
       success: true,
