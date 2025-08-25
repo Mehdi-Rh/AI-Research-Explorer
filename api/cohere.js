@@ -1,23 +1,4 @@
-import { CohereClientV2 } from 'cohere-ai';
-
-interface VercelRequest {
-  method?: string;
-  body: Record<string, unknown>;
-}
-
-interface VercelResponse {
-  setHeader: (name: string, value: string) => void;
-  status: (code: number) => VercelResponse;
-  json: (object: Record<string, unknown>) => void;
-  end: () => void;
-}
-
-interface CohereRequest {
-  prompt: string;
-  model?: string;
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -53,24 +34,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Parse and validate request body
-    const requestData = req.body as unknown as CohereRequest;
+    const requestData = req.body;
 
     if (!requestData.prompt || typeof requestData.prompt !== 'string') {
       return res.status(400).json({ error: 'Valid prompt is required' });
     }
 
-    // Initialize Cohere client
-    const cohere = new CohereClientV2({
-      token: apiKey,
-    });
-
-    console.log('Making request to Cohere API...', {
-      model: requestData.model || 'command-a-03-2025',
-      promptLength: requestData.prompt.length,
-    });
-
-    // Make request to Cohere API using the official SDK
-    const response = await cohere.chat({
+    // Prepare Cohere API request
+    const coherePayload = {
       model: requestData.model || 'command-a-03-2025',
       messages: [
         {
@@ -78,20 +49,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           content: requestData.prompt,
         },
       ],
+    };
+
+    console.log('Making request to Cohere API...', {
+      model: coherePayload.model,
+      promptLength: coherePayload.messages[0].content.length,
     });
 
-    console.log('Cohere API request successful');
+    // Make request to Cohere API
+    const response = await fetch('https://api.cohere.com/v2/chat', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(coherePayload),
+    });
 
-    // Extract text from response
-    let responseText = 'No response generated';
-    if (response.message?.content) {
-      for (const contentItem of response.message.content) {
-        if ('text' in contentItem && contentItem.text) {
-          responseText = contentItem.text;
-          break;
-        }
-      }
+    // Handle Cohere API response
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Cohere API error (${response.status}):`, errorText);
+
+      // Return the same status code to preserve retry logic
+      return res.status(response.status).json({
+        error: `Cohere API error: ${response.status}`,
+        details: errorText,
+      });
     }
+
+    const cohereResponse = await response.json();
+
+    // Extract text from Cohere response
+    let responseText = 'No response generated';
+    if (cohereResponse.message?.content?.[0]?.text) {
+      responseText = cohereResponse.message.content[0].text;
+    }
+
+    console.log('Cohere API request successful');
 
     return res.status(200).json({
       success: true,
